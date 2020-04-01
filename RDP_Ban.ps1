@@ -2,7 +2,6 @@
 # "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -File "C:\Users\Public\PowerShell\RDP_Ban.ps1"
 $Store = "C:\Users\Public\PowerShell\RDP_Ban"
 $WatchList = "$($Store)\WatchList"
-
 $SecurityLog = Get-WinEvent -FilterHashtable @{LogName = "Security"; Id = 4625 } -MaxEvents 1
 $SecurityLogXML = [xml]$SecurityLog.ToXml()
 $FormatTime = "yyyy-MM-ddTHH:mm:ss.ffff"
@@ -25,7 +24,9 @@ foreach ($Pair in $NewEvent) {
     $Events.Add($TimeCreated, $Pair)
 }
 
+$RemoveEvents = $true
 if (!(Test-Path -Path "$($WatchList)\$($IpAddress).json" -PathType Leaf)) {
+    $RemoveEvents = $false
     if (!(Test-Path -Path "$($WatchList)" -PathType Container)) {
         New-Item -Path "$($WatchList)" -ItemType "directory"
     }
@@ -48,9 +49,12 @@ foreach ($Pair in $EventsToRemove.GetEnumerator()) {
     $Events.Remove($Pair.Name)
 }
 
+$StoreEvents = ($Events.Count -gt 0)
+$StoreBanList = ($Events.Count -gt 10)
+
 $BanList = $null
 $BanList = @{ }
-if ($Events.Count -gt 10) {
+if ($StoreBanList) {
     $BanList.Add($IpAddress, (Get-Date -Format $FormatTime))
     if (Test-Path -Path "$($Store)\BanList.json" -PathType Leaf) {
         $StoredBanList = (Get-Content -Path "$($Store)\BanList.json" | ConvertFrom-Json)
@@ -78,19 +82,21 @@ if ($Events.Count -gt 10) {
     Start-Process -WorkingDirectory "C:\Windows\System32" -NoNewWindow -FilePath "C:\Windows\System32\netsh.exe" -ArgumentList "advfirewall", "firewall", "add", "rule", "name=""$($RuleNameUDP)""", "dir=in", "action=block", "enable=yes", "profile=any", "protocol=udp", "localport=3389", "remoteip=$($BanListString)" # -RedirectStandardOutput "$($Store)\stdout.log" -RedirectStandardError "$($Store)\stderr.log" -ErrorAction Stop
 }
 
-if ($BanList.Count -gt 0) {
-    Remove-Item -Path "$($WatchList)\$($IpAddress).json"
-    $BanListJson = ($BanList | ConvertTo-Json)
-    Set-Content -Path "$($Store)\BanList.json" -Value $BanListJson
-}
-else {
-    if ($Events.Count -gt 0) {
-        $EventsJson = ($Events | ConvertTo-Json)
-        Set-Content -Path "$($WatchList)\$($IpAddress).json" -Value $EventsJson
+if ($StoreEvents) {
+    if ($StoreBanList) {
+        $BanListJson = ($BanList | ConvertTo-Json)
+        Set-Content -Path "$($Store)\BanList.json" -Value $BanListJson
+        Remove-Item -Path "$($WatchList)\$($IpAddress).json"
     }
     else {
+        $EventsJson = ($Events | ConvertTo-Json)
+        Set-Content -Path "$($WatchList)\$($IpAddress).json" -Value $EventsJson    
+    }
+}
+else {
+    if ($RemoveEvents) {
         Remove-Item -Path "$($WatchList)\$($IpAddress).json"
-    }    
+    }
 }
 
 Write-host "-----"
