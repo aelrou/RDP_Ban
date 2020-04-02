@@ -1,7 +1,7 @@
 # RDP_Ban
 PowerShell script that mitigates brute-force Remote Desktop (RDP) login attempts
 
-Exposing Remote Desktop to WAN isn't the most secure thing to do, but it's free.
+Exposing Remote Desktop to WAN isn't the most secure thing to do, but it is subscription-free.
 
 This PowerShell script is designed to run as a task with Administrative privileges in the Task Scheduler on Windows 10 Pro. The trigger is event ID 4625 from the Security log in the Event Viewer. That happens whenever there a failed RDP login attempt.
 
