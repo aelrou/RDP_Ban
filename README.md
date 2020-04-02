@@ -25,21 +25,21 @@ It may not be a great idea to expose RDP to WAN on out-of-support operating syst
 > Beginning with Windows 10, version 1607 and Windows Server 2016, SSL 3.0 has been disabled by default.
 
 ```
-Windows Registry Editor Version 5.00  
+Windows Registry Editor Version 5.00
 
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Server]  
-"Enabled"=dword:00000000  
-"DisabledByDefault"=dword:00000001  
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Server]
+"Enabled"=dword:00000000
+"DisabledByDefault"=dword:00000001
 
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server]  
-"Enabled"=dword:00000000  
-"DisabledByDefault"=dword:00000001  
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server]
+"Enabled"=dword:00000000
+"DisabledByDefault"=dword:00000001
 
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\DTLS 1.0\Server]  
-"Enabled"=dword:00000000  
-"DisabledByDefault"=dword:00000001  
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\DTLS 1.0\Server]
+"Enabled"=dword:00000000
+"DisabledByDefault"=dword:00000001
 
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server]  
-"Enabled"=dword:00000000  
-"DisabledByDefault"=dword:00000001  
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server]
+"Enabled"=dword:00000000
+"DisabledByDefault"=dword:00000001
 ```
