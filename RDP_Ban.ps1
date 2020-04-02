@@ -2,7 +2,8 @@
 # "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -File "C:\Users\Public\PowerShell\RDP_Ban.ps1"
 $Store = "C:\Users\Public\PowerShell\RDP_Ban"
 $WatchList = "$($Store)\WatchList"
-$SecurityLog = Get-WinEvent -FilterHashtable @{LogName = "Security"; Id = 4625 } -MaxEvents 1
+
+$SecurityLog = (Get-WinEvent -FilterHashtable @{LogName = "Security"; Id = 4625 } -MaxEvents 1)
 $SecurityLogXML = [xml]$SecurityLog.ToXml()
 $FormatTime = "yyyy-MM-ddTHH:mm:ss.ffff"
 $TimeCreated = (Get-Date -Date $SecurityLog.TimeCreated -Format $FormatTime)
