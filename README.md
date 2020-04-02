@@ -20,3 +20,22 @@ IPv6 bans are not yet supported.
 
 **Words of caution:**  
 It may not be a great idea to expose RDP to WAN on out-of-support operating systems like [Windows 7 Pro](https://www.google.com/search?q=Windows+7+support+end+January+14+2020) or [Server 2008 R2](https://www.google.com/search?q=Server+2008+R2+support+end+January+14+2020). For that matter, even doing so on in-support operating systems that are not patched with security updates in a timely fashion is risky. Also, any Windows operating system exposing RDP to WAN should not permit connections with less than TLS 1.2 security. Please disable [SSL 2.0, SSL 3.0, TLS 1.0, and TLS 1.1](https://docs.microsoft.com/en-us/windows-server/security/tls/tls-registry-settings) before exposing RDP to WAN. On a properly patched and configured in-support Windows operating system, RDP is relatively secure so long as the credentials remain private.
+
+> Beginning with Windows 10, version 1607 and Windows Server 2016, SSL 2.0 has been removed and is no longer supported.  
+> Beginning with Windows 10, version 1607 and Windows Server 2016, SSL 3.0 has been disabled by default.
+
+```
+Windows Registry Editor Version 5.00  
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Server]  
+"Enabled"=dword:00000000  
+"DisabledByDefault"=dword:00000001  
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server]  
+"Enabled"=dword:00000000  
+"DisabledByDefault"=dword:00000001  
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server]  
+"Enabled"=dword:00000000  
+"DisabledByDefault"=dword:00000001  
+```
