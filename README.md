@@ -21,9 +21,11 @@ Exposing RDP to WAN on a Windows operating system could be a secutiry risk. The 
  - Only use in-support operating systems. [Windows 7 Pro](https://www.google.com/search?q=Windows+7+support+end+January+14+2020) and [Server 2008 R2](https://www.google.com/search?q=Server+2008+R2+support+end+January+14+2020) are out-of-support.  
  - Keep operating systems up-to-date with security patches. By default most operating systems install them automatically.
  - Use strong credentials.
-   - This password: "*argh you cannot seem to count without loosing your spot anyway*" is way stronger than this password: "*#91@pp1e5!*"  
-   - People who believe using specials characters, mixed-case letters, and numbers, makes passwords stronger are misguided. By far the most important factor is length.  
- - Disable obsolete protocols like [SSL 2.0, SSL 3.0, TLS 1.0, and TLS 1.1](https://docs.microsoft.com/en-us/windows-server/security/tls/tls-registry-settings)  
+   - This password: "*argh you cannot seem to count without loosing your spot anyway*"  
+   Is way stronger than this password: "*#91@pp1e5!*"  
+   People who believe using specials characters, mixed-case letters, and numbers, makes passwords stronger are misguided.  
+   The most important factor by far is length.  
+ - Disable obsolete protocols like [SSL 2.0, SSL 3.0, TLS 1.0, and TLS 1.1](https://docs.microsoft.com/en-us/windows-server/security/tls/tls-registry-settings#ssl-20)  
 > Beginning with Windows 10, version 1607 and Windows Server 2016, SSL 2.0 has been removed and is no longer supported.  
 > Beginning with Windows 10, version 1607 and Windows Server 2016, SSL 3.0 has been disabled by default.  
  - Disable insecure ciphers like [DES, RC2, and RC4](https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/operations/manage-ssl-protocols-in-ad-fs#enable-and-disable-rc4)  
