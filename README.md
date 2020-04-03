@@ -14,7 +14,7 @@ Run a script: *CMD* `"powershell.exe" -File "C:\RDP_Ban.ps1"`
 Run a script: *PowerShell* `& "C:\RDP_Ban.ps1"`  
 
 ## Please review and update as necessary:  
- - The $Store directory: `"C:\Users\Public\PowerShell\RDP_Ban"`  
+ - The ***$Store*** directory: `"C:\Users\Public\PowerShell\RDP_Ban"`  
 
 ### About security:
 Exposing RDP to WAN on a Windows operating system could be a secutiry risk. The following guilelines will minimize that risk.
@@ -23,8 +23,7 @@ Exposing RDP to WAN on a Windows operating system could be a secutiry risk. The 
  - Use strong credentials.
    - This password: "*argh you cannot seem to count without loosing your spot anyway*"  
    Is way stronger than this password: "*#91@pp1e5!*"  
-   People who believe using specials characters, mixed-case letters, and numbers, makes passwords stronger are misguided.  
-   The most important factor by far is length.  
+   People who believe using specials characters, mixed-case letters, and numbers, makes passwords stronger are misguided. The most important factor by far is **length.**  
  - Disable obsolete protocols like [SSL 2.0, SSL 3.0, TLS 1.0, and TLS 1.1](https://docs.microsoft.com/en-us/windows-server/security/tls/tls-registry-settings#ssl-20)  
 > Beginning with Windows 10, version 1607 and Windows Server 2016, SSL 2.0 has been removed and is no longer supported.  
 > Beginning with Windows 10, version 1607 and Windows Server 2016, SSL 3.0 has been disabled by default.  
