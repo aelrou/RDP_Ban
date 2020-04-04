@@ -32,11 +32,6 @@ if ($IPv4 -eq $false) {
     }
 }
 
-if ($IPv4 -eq $IPv6) {
-    # The IpAddress does not appear to be well-formed IPv4 or IPv6 so we cannot proceed
-    Exit
-}
-
 $NewEvent = $null
 $NewEvent = @{ }
 $NewEvent.Add("MachineName", $SecurityLog.MachineName)
@@ -87,6 +82,10 @@ foreach ($Pair in $EventsToRemove.GetEnumerator()) {
 
 $StoreEvents = ($Events.Count -gt 0)
 $StoreBanList = ($Events.Count -gt 10)
+if ($IPv4 -eq $IPv6) {
+    # The IpAddress does not appear to be well-formed IPv4 or IPv6 so we cannot use it to update the ban list
+    $StoreBanList = $false
+}
 
 $BanList = $null
 $BanList = @{ }
