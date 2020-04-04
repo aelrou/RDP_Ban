@@ -7,8 +7,6 @@ This script will determin if a remote IPv4 address has failed more than 10 RDP l
 
 Tested on Windows Server 2016 and Windows Server 2019 and found to be as functional as on Windows 10 Pro.
 
-IPv6 bans are not yet supported.
-
 Permit PowerShell scripts on a host: *PowerShell* `Set-ExecutionPolicy RemoteSigned` Then `Y` to confirm  
 Run a script: *CMD* `"powershell.exe" -File "C:\RDP_Ban.ps1"`  
 Run a script: *PowerShell* `& "C:\RDP_Ban.ps1"`  

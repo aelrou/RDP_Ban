@@ -9,6 +9,34 @@ $FormatTime = "yyyy-MM-ddTHH:mm:ss.ffff"
 $TimeCreated = (Get-Date -Date $SecurityLog.TimeCreated -Format $FormatTime)
 $IpAddress = ($SecurityLogXML.Event.EventData.Data | Where-Object { $_.Name -eq "IpAddress" })."#text"
 
+$IPv4 = $false
+if ($IpAddress -match "^(\d+)\.(\d+)\.(\d+)\.(\d+)$") {
+        # Address contains only IPv4 characters
+        if ([int]$Matches.1 -gt 0 -and [int]$Matches.1 -lt 256 -and [int]$Matches.2 -lt 256 -and [int]$Matches.3 -lt 256 -and [int]$Matches.4 -lt 256) {
+        # Appears to be well-formed IPv4
+        $IPv4 = $true
+    }    
+}
+
+$IPv6 = $false
+$IPv6noInterfaceID = $null
+if ($IPv4 -eq $false) {
+    if ($IpAddress -match "^([\da-fA-F:]*)%?\d*?$") {
+        # Address contains only IPv6 characters
+        $IPv6noInterfaceID = $Matches.1
+        if ($IPv6noInterfaceID -match "^([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?$") {
+            # Appears to be well-formed IPv6
+            $IPv6 = $true
+            $IpAddress = $IPv6noInterfaceID
+        }
+    }
+}
+
+if ($IPv4 -eq $IPv6) {
+    # The IpAddress does not appear to be well-formed IPv4 or IPv6 so we cannot proceed
+    Exit
+}
+
 $NewEvent = $null
 $NewEvent = @{ }
 $NewEvent.Add("MachineName", $SecurityLog.MachineName)
@@ -25,15 +53,22 @@ foreach ($Pair in $NewEvent) {
     $Events.Add($TimeCreated, $Pair)
 }
 
+$Stream = [System.IO.MemoryStream]::new()
+$Writer = [System.IO.StreamWriter]::new($Stream)
+$Writer.write($IpAddress)
+$Writer.Flush()
+$Stream.Position = 0
+$IpAddressMD5 = (Get-FileHash -InputStream $Stream -Algorithm "MD5" | Select-Object Hash).Hash
+
 $RemoveEvents = $true
-if (!(Test-Path -Path "$($WatchList)\$($IpAddress).json" -PathType Leaf)) {
+if (!(Test-Path -Path "$($WatchList)\$($IpAddressMD5).json" -PathType Leaf)) {
     $RemoveEvents = $false
     if (!(Test-Path -Path "$($WatchList)" -PathType Container)) {
         New-Item -Path "$($WatchList)" -ItemType "directory"
     }
 }
 else {
-    $StoredEvents = (Get-Content -Path "$($WatchList)\$($IpAddress).json" | ConvertFrom-Json)
+    $StoredEvents = (Get-Content -Path "$($WatchList)\$($IpAddressMD5).json" | ConvertFrom-Json)
     $StoredEvents.PSObject.Properties | ForEach-Object { $Events[$_.Name] = $_.Value }
 }
 
@@ -92,16 +127,16 @@ if ($StoreEvents) {
     if ($StoreBanList) {
         $BanListJson = ($BanList | ConvertTo-Json)
         Set-Content -Path "$($Store)\BanList.json" -Value $BanListJson
-        Remove-Item -Path "$($WatchList)\$($IpAddress).json"
+        Remove-Item -Path "$($WatchList)\$($IpAddressMD5).json"
     }
     else {
         $EventsJson = ($Events | ConvertTo-Json)
-        Set-Content -Path "$($WatchList)\$($IpAddress).json" -Value $EventsJson    
+        Set-Content -Path "$($WatchList)\$($IpAddressMD5).json" -Value $EventsJson    
     }
 }
 else {
     if ($RemoveEvents) {
-        Remove-Item -Path "$($WatchList)\$($IpAddress).json"
+        Remove-Item -Path "$($WatchList)\$($IpAddressMD5).json"
     }
 }
 
