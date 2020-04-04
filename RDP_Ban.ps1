@@ -73,14 +73,19 @@ if ($StoreBanList) {
         }
     }
 
-    $RuleNameTCP = "RDP_Ban - TCP 3389"
-    $RuleNameUDP = "RDP_Ban - UDP 3389"
+    $Port = "3389"
+    $RuleNameTCP = "RDP_Ban - TCP $($Port)"
+    $RuleNameUDP = "RDP_Ban - UDP $($Port)"
+    $BanCommandString = "C:`n"
+    $BanCommandString = "$($BanCommandString)cd ""C:\Windows\System32""`n"
+    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall delete rule name=""$($RuleNameTCP)""`n"
+    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall add rule name=""$($RuleNameTCP)"" dir=in action=block enable=yes profile=any protocol=tcp localport=$($Port) remoteip=$($BanListString)`n"
+    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall delete rule name=""$($RuleNameUDP)""`n"
+    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall add rule name=""$($RuleNameUDP)"" dir=in action=block enable=yes profile=any protocol=udp localport=$($Port) remoteip=$($BanListString)`n"
     
-    Start-Process -WorkingDirectory "C:\Windows\System32" -NoNewWindow -Wait -FilePath "C:\Windows\System32\netsh.exe" -ArgumentList "advfirewall", "firewall", "delete", "rule", "name=""$($RuleNameTCP)""" # -RedirectStandardOutput "$($Store)\stdout.log" -RedirectStandardError "$($Store)\stderr.log" -ErrorAction Stop
-    Start-Process -WorkingDirectory "C:\Windows\System32" -NoNewWindow -FilePath "C:\Windows\System32\netsh.exe" -ArgumentList "advfirewall", "firewall", "add", "rule", "name=""$($RuleNameTCP)""", "dir=in", "action=block", "enable=yes", "profile=any", "protocol=tcp", "localport=3389", "remoteip=$($BanListString)" # -RedirectStandardOutput "$($Store)\stdout.log" -RedirectStandardError "$($Store)\stderr.log" -ErrorAction Stop
+    Set-Content -Path "$($Store)\RDP_Ban.bat" -Value $BanCommandString
     
-    Start-Process -WorkingDirectory "C:\Windows\System32" -NoNewWindow -Wait -FilePath "C:\Windows\System32\netsh.exe" -ArgumentList "advfirewall", "firewall", "delete", "rule", "name=""$($RuleNameUDP)""" # -RedirectStandardOutput "$($Store)\stdout.log" -RedirectStandardError "$($Store)\stderr.log" -ErrorAction Stop
-    Start-Process -WorkingDirectory "C:\Windows\System32" -NoNewWindow -FilePath "C:\Windows\System32\netsh.exe" -ArgumentList "advfirewall", "firewall", "add", "rule", "name=""$($RuleNameUDP)""", "dir=in", "action=block", "enable=yes", "profile=any", "protocol=udp", "localport=3389", "remoteip=$($BanListString)" # -RedirectStandardOutput "$($Store)\stdout.log" -RedirectStandardError "$($Store)\stderr.log" -ErrorAction Stop
+    Start-Process -WorkingDirectory "$($Store)" -NoNewWindow -FilePath "$($Store)\RDP_Ban.bat" # -RedirectStandardOutput "$($Store)\stdout.log" -RedirectStandardError "$($Store)\stderr.log" -ErrorAction Stop
 }
 
 if ($StoreEvents) {
