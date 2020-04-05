@@ -90,9 +90,10 @@ if ($IPv4 -eq $IPv6) {
 if ($StoreBanList) {
     if (`
             $IpAddress -like "127.0.0.1"`
-            -or $IpAddress -like "169.254.0."`
-            -or $IpAddress -like "192.168.0."`
-            -or $IpAddress -like "172.16.0."`
+            -or $IpAddress -like "169.254.0.254"`
+            -or $IpAddress -like "192.168.0.2"`
+            -or $IpAddress -like "172.16.0.2"`
+            -or $IpAddress -like "10.0.0.2"`
             -or $IpAddress -like "fe80:ffff:ffff:ffff:ffff:ffff:ffff:ffff"`
     ) {
         # The IpAddress is white-listed so we cannot use it to update the ban list
