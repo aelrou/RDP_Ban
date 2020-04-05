@@ -11,9 +11,9 @@ $IpAddress = ($SecurityLogXML.Event.EventData.Data | Where-Object { $_.Name -eq 
 
 $IPv4 = $false
 if ($IpAddress -match "^(\d+)\.(\d+)\.(\d+)\.(\d+)$") {
-    # Address contains only IPv4 characters
+    # IpAddress contains only IPv4 characters
     if ([int]$Matches.1 -gt 0 -and [int]$Matches.1 -lt 256 -and [int]$Matches.2 -lt 256 -and [int]$Matches.3 -lt 256 -and [int]$Matches.4 -lt 256) {
-        # Appears to be well-formed IPv4
+        # IpAddress appears to be well-formed IPv4
         $IPv4 = $true
     }    
 }
@@ -21,11 +21,12 @@ if ($IpAddress -match "^(\d+)\.(\d+)\.(\d+)\.(\d+)$") {
 $IPv6 = $false
 $IPv6noInterfaceID = $null
 if ($IPv4 -eq $false) {
-    if ($IpAddress -match "^([\da-fA-F:]*)%?\d*?$") {
-        # Address contains only IPv6 characters
+    if ($IpAddress -match "^([\da-f:]*)%?\d*?$") {
+        # IpAddress contains only IPv6 characters
+        # Get the first capturing group which does not contain the IPv6 interface ID
         $IPv6noInterfaceID = $Matches.1
-        if ($IPv6noInterfaceID -match "^([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?:?([\da-fA-F]{0,4})?$") {
-            # Appears to be well-formed IPv6
+        if ($IPv6noInterfaceID -match "^([\da-f]{0,4})?:?([\da-f]{0,4})?:?([\da-f]{0,4})?:?([\da-f]{0,4})?:?([\da-f]{0,4})?:?([\da-f]{0,4})?:?([\da-f]{0,4})?:?([\da-f]{0,4})?$") {
+            # IPv6noInterfaceID appears to be well-formed IPv6
             $IPv6 = $true
             $IpAddress = $IPv6noInterfaceID
         }
