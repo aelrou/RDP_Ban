@@ -11,8 +11,8 @@ $IpAddress = ($SecurityLogXML.Event.EventData.Data | Where-Object { $_.Name -eq 
 
 $IPv4 = $false
 if ($IpAddress -match "^(\d+)\.(\d+)\.(\d+)\.(\d+)$") {
-        # Address contains only IPv4 characters
-        if ([int]$Matches.1 -gt 0 -and [int]$Matches.1 -lt 256 -and [int]$Matches.2 -lt 256 -and [int]$Matches.3 -lt 256 -and [int]$Matches.4 -lt 256) {
+    # Address contains only IPv4 characters
+    if ([int]$Matches.1 -gt 0 -and [int]$Matches.1 -lt 256 -and [int]$Matches.2 -lt 256 -and [int]$Matches.3 -lt 256 -and [int]$Matches.4 -lt 256) {
         # Appears to be well-formed IPv4
         $IPv4 = $true
     }    
@@ -85,6 +85,19 @@ $StoreBanList = ($Events.Count -gt 10)
 if ($IPv4 -eq $IPv6) {
     # The IpAddress does not appear to be well-formed IPv4 or IPv6 so we cannot use it to update the ban list
     $StoreBanList = $false
+}
+
+if ($StoreBanList) {
+    if (`
+            $IpAddress -like "127.0.0.1"`
+            -or $IpAddress -like "169.254.0."`
+            -or $IpAddress -like "192.168.0."`
+            -or $IpAddress -like "172.16.0."`
+            -or $IpAddress -like "fe80:ffff:ffff:ffff:ffff:ffff:ffff:ffff"`
+    ) {
+        # The IpAddress is white-listed so we cannot use it to update the ban list
+        $StoreBanList = $false
+    }
 }
 
 $BanList = $null
