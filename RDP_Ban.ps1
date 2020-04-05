@@ -125,12 +125,12 @@ if ($StoreBanList) {
     $Port = "3389"
     $RuleNameTCP = "RDP_Ban - TCP $($Port)"
     $RuleNameUDP = "RDP_Ban - UDP $($Port)"
-    $BanCommandString = "C:`n"
-    $BanCommandString = "$($BanCommandString)cd ""C:\Windows\System32""`n"
-    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall delete rule name=""$($RuleNameTCP)""`n"
-    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall add rule name=""$($RuleNameTCP)"" dir=in action=block enable=yes profile=any protocol=tcp localport=$($Port) remoteip=$($BanListString)`n"
-    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall delete rule name=""$($RuleNameUDP)""`n"
-    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall add rule name=""$($RuleNameUDP)"" dir=in action=block enable=yes profile=any protocol=udp localport=$($Port) remoteip=$($BanListString)`n"
+    $BanCommandString = "C:`r`n"
+    $BanCommandString = "$($BanCommandString)cd ""C:\Windows\System32""`r`n"
+    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall delete rule name=""$($RuleNameTCP)""`r`n"
+    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall add rule name=""$($RuleNameTCP)"" dir=in action=block enable=yes profile=any protocol=tcp localport=$($Port) remoteip=$($BanListString)`r`n"
+    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall delete rule name=""$($RuleNameUDP)""`r`n"
+    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall add rule name=""$($RuleNameUDP)"" dir=in action=block enable=yes profile=any protocol=udp localport=$($Port) remoteip=$($BanListString)`r`n"
     
     Set-Content -Path "$($Store)\RDP_Ban.bat" -Value $BanCommandString
     
