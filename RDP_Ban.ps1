@@ -51,7 +51,7 @@ foreach ($Pair in $NewEvent) {
 
 $Stream = [System.IO.MemoryStream]::new()
 $Writer = [System.IO.StreamWriter]::new($Stream)
-$Writer.write($IpAddress)
+$Writer.Write($IpAddress)
 $Writer.Flush()
 $Stream.Position = 0
 $IpAddressMD5 = (Get-FileHash -InputStream $Stream -Algorithm "MD5" | Select-Object Hash).Hash
