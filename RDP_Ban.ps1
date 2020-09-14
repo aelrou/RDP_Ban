@@ -125,16 +125,16 @@ if ($StoreBanList) {
     $Port = "3389"
     $RuleNameTCP = "RDP_Ban - TCP $($Port)"
     $RuleNameUDP = "RDP_Ban - UDP $($Port)"
-    $BanCommandString = "C:`r`n"
-    $BanCommandString = "$($BanCommandString)cd ""C:\Windows\System32""`r`n"
-    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall delete rule name=""$($RuleNameTCP)""`r`n"
-    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall add rule name=""$($RuleNameTCP)"" dir=in action=block enable=yes profile=any protocol=tcp localport=$($Port) remoteip=$($BanListString)`r`n"
-    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall delete rule name=""$($RuleNameUDP)""`r`n"
-    $BanCommandString = "$($BanCommandString)""netsh.exe"" advfirewall firewall add rule name=""$($RuleNameUDP)"" dir=in action=block enable=yes profile=any protocol=udp localport=$($Port) remoteip=$($BanListString)`r`n"
+
+    $BanScriptString = "`r`n"
+    $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameTCP)""`r`n"
+    $BanScriptString = "$($BanScriptString)advfirewall firewall add rule name=""$($RuleNameTCP)"" dir=in action=block enable=yes profile=any protocol=tcp localport=$($Port) remoteip=$($BanListString)`r`n"
+    $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameUDP)""`r`n"
+    $BanScriptString = "$($BanScriptString)advfirewall firewall add rule name=""$($RuleNameUDP)"" dir=in action=block enable=yes profile=any protocol=udp localport=$($Port) remoteip=$($BanListString)`r`n"
     
-    Set-Content -Path "$($Store)\RDP_Ban.bat" -Value $BanCommandString
+    Set-Content -Path "$($Store)\RDP_Ban.txt" -Value $BanScriptString
     
-    Start-Process -WorkingDirectory "$($Store)" -NoNewWindow -FilePath "$($Store)\RDP_Ban.bat" # -RedirectStandardOutput "$($Store)\stdout.log" -RedirectStandardError "$($Store)\stderr.log" -ErrorAction Stop
+    Start-Process -WorkingDirectory "$($Store)" -NoNewWindow -FilePath "C:\Windows\System32\netsh.exe" -ArgumentList "-f ","$($Store)\RDP_Ban.txt" # -RedirectStandardOutput "$($Store)\stdout.log" -RedirectStandardError "$($Store)\stderr.log" -ErrorAction Stop
 }
 
 if ($StoreEvents) {
