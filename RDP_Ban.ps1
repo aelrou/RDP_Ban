@@ -113,15 +113,15 @@ if ($StoreBanList -eq $true) {
 
     $ConcatAddressArrayList = New-Object -TypeName "System.Collections.ArrayList"
     $ConcatAddressString = ""
+    $SaveConcatAddressString = $true
     $FirstAddress = $true
-    $SegmentCount = 0
     foreach ($Pair in $BanList.GetEnumerator()) {
         # Limit the max length to 1800 so that there are 247 characters for commands, rule name, and padding
         if ($ConcatAddressString.Length -lt 1800) {
             if ($FirstAddress -eq $true) {
                 $ConcatAddressString = "$($Pair.Name)"
+                $SaveConcatAddressString = $true
                 $FirstAddress = $false
-                $SegmentCount ++
             }
             else {
                 $ConcatAddressString = -join("$($ConcatAddressString)", ",", "$($Pair.Name)")
@@ -130,11 +130,12 @@ if ($StoreBanList -eq $true) {
         else {
             $ConcatAddressString = -join("$($ConcatAddressString)", ",", "$($Pair.Name)")
             $ConcatAddressArrayList.Add($ConcatAddressString)
+            $SaveConcatAddressString = $false
             $ConcatAddressString = ""
             $FirstAddress = $true
         }
     }
-    if (($ConcatAddressArrayList.Count + 1) -eq $SegmentCount) {
+    if ($SaveConcatAddressString -eq $true) {
         $ConcatAddressArrayList.Add($ConcatAddressString)
     }
 
