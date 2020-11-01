@@ -111,37 +111,53 @@ if ($StoreBanList) {
         $StoredBanList.PSObject.Properties | ForEach-Object { $BanList[$_.Name] = $_.Value }
     }
 
-    $First = $true
+    $ConcatAddressArrayList = New-Object -TypeName "System.Collections.ArrayList"
+    $ConcatAddressString = ""
+    $FirstAddress = $true
     foreach ($Pair in $BanList.GetEnumerator()) {
-        if ($First) {
-            $BanListString = $Pair.Name
-            $First = $false
+        # Limit the max length to 1800 so that there are 247 characters for commands, rule name, and padding
+        if ($ConcatAddressString.Length -lt 1800) {
+            if ($FirstAddress -eq $true) {
+                $ConcatAddressString = "$($Pair.Name)"
+                $FirstAddress = $false
+            }
+            else {
+                $ConcatAddressString = -join("$($ConcatAddressString)", ",", "$($Pair.Name)")
+            }
         }
         else {
-            $BanListString = "$($BanListString),$($Pair.Name)"
+            $ConcatAddressString = -join("$($ConcatAddressString)", ",", "$($Pair.Name)")
+            $ConcatAddressArrayList.Add($ConcatAddressString)
+            $ConcatAddressString = ""
+            $FirstAddress = $true
         }
+    }
+    if ($ConcatAddressArrayList.Count -eq 0) {
+        $ConcatAddressArrayList.Add($ConcatAddressString)
     }
 
     $Port = "3389"
-    $RuleNameTCP = "RDP_Ban - TCP $($Port)"
-    $RuleNameUDP = "RDP_Ban - UDP $($Port)"
-
-    $BanScriptString = "`r`n"
-    $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameTCP)""`r`n"
-    $BanScriptString = "$($BanScriptString)advfirewall firewall add rule name=""$($RuleNameTCP)"" dir=in action=block enable=yes profile=any protocol=tcp localport=$($Port) remoteip=$($BanListString)`r`n"
-    $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameUDP)""`r`n"
-    $BanScriptString = "$($BanScriptString)advfirewall firewall add rule name=""$($RuleNameUDP)"" dir=in action=block enable=yes profile=any protocol=udp localport=$($Port) remoteip=$($BanListString)`r`n"
-    
+    $BanScriptString = ""
+    $ScriptLoopCount = 0
+    do {
+        $RuleNameTCP = "RDP_Ban $($ScriptLoopCount) - TCP $($Port)"
+        $RuleNameUDP = "RDP_Ban $($ScriptLoopCount) - UDP $($Port)"
+        $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameTCP)""`r`n"
+        $BanScriptString = "$($BanScriptString)advfirewall firewall add rule name=""$($RuleNameTCP)"" dir=in action=block enable=yes profile=any protocol=tcp localport=$($Port) remoteip=$($ConcatAddressArrayList[$ScriptLoopCount])`r`n"
+        $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameUDP)""`r`n"
+        $BanScriptString = "$($BanScriptString)advfirewall firewall add rule name=""$($RuleNameUDP)"" dir=in action=block enable=yes profile=any protocol=udp localport=$($Port) remoteip=$($ConcatAddressArrayList[$ScriptLoopCount])`r`n"
+        $BanScriptString = "$($BanScriptString)`r`n"
+        $ScriptLoopCount ++
+    } until ($ScriptLoopCount+1 -gt $ConcatAddressArrayList.Count)
     Set-Content -Path "$($Store)\RDP_Ban.txt" -Value $BanScriptString
-    
-    Start-Process -WorkingDirectory "$($Store)" -NoNewWindow -FilePath "C:\Windows\System32\netsh.exe" -ArgumentList "-f ","$($Store)\RDP_Ban.txt" # -RedirectStandardOutput "$($Store)\stdout.log" -RedirectStandardError "$($Store)\stderr.log" -ErrorAction Stop
+    Start-Process -WorkingDirectory "$($Store)" -NoNewWindow -FilePath "C:\Windows\System32\netsh.exe" -ArgumentList "-f", "$($Store)\RDP_Ban.txt" # -RedirectStandardOutput "$($Store)\stdout.log" -RedirectStandardError "$($Store)\stderr.log" -ErrorAction Stop
 }
 
 if ($StoreEvents) {
     if ($StoreBanList) {
         $BanListJson = ($BanList | ConvertTo-Json)
         Set-Content -Path "$($Store)\BanList.json" -Value $BanListJson
-        Remove-Item -Path "$($WatchList)\$($IpAddressMD5).json"
+        #Remove-Item -Path "$($WatchList)\$($IpAddressMD5).json"
     }
     else {
         $EventsJson = ($Events | ConvertTo-Json)
@@ -150,7 +166,7 @@ if ($StoreEvents) {
 }
 else {
     if ($RemoveEvents) {
-        Remove-Item -Path "$($WatchList)\$($IpAddressMD5).json"
+        #Remove-Item -Path "$($WatchList)\$($IpAddressMD5).json"
     }
 }
 
