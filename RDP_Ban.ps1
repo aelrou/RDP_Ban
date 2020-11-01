@@ -88,7 +88,7 @@ if ($IPv4 -eq $IPv6) {
     $StoreBanList = $false
 }
 
-if ($StoreBanList) {
+if ($StoreBanList -eq $true) {
     if (`
             $IpAddress -like "127.0.0.1"`
             -or $IpAddress -like "169.254.0.254"`
@@ -104,7 +104,7 @@ if ($StoreBanList) {
 
 $BanList = $null
 $BanList = @{ }
-if ($StoreBanList) {
+if ($StoreBanList -eq $true) {
     $BanList.Add($IpAddress, (Get-Date -Format $FormatTime))
     if (Test-Path -Path "$($Store)\BanList.json" -PathType Leaf) {
         $StoredBanList = (Get-Content -Path "$($Store)\BanList.json" | ConvertFrom-Json)
@@ -114,12 +114,14 @@ if ($StoreBanList) {
     $ConcatAddressArrayList = New-Object -TypeName "System.Collections.ArrayList"
     $ConcatAddressString = ""
     $FirstAddress = $true
+    $SegmentCount = 0
     foreach ($Pair in $BanList.GetEnumerator()) {
         # Limit the max length to 1800 so that there are 247 characters for commands, rule name, and padding
         if ($ConcatAddressString.Length -lt 1800) {
             if ($FirstAddress -eq $true) {
                 $ConcatAddressString = "$($Pair.Name)"
                 $FirstAddress = $false
+                $SegmentCount ++
             }
             else {
                 $ConcatAddressString = -join("$($ConcatAddressString)", ",", "$($Pair.Name)")
@@ -132,7 +134,7 @@ if ($StoreBanList) {
             $FirstAddress = $true
         }
     }
-    if ($ConcatAddressArrayList.Count -eq 0) {
+    if (($ConcatAddressArrayList.Count + 1) -eq $SegmentCount) {
         $ConcatAddressArrayList.Add($ConcatAddressString)
     }
 
@@ -148,12 +150,12 @@ if ($StoreBanList) {
         $BanScriptString = "$($BanScriptString)advfirewall firewall add rule name=""$($RuleNameUDP)"" dir=in action=block enable=yes profile=any protocol=udp localport=$($Port) remoteip=$($ConcatAddressArrayList[$ScriptLoopCount])`r`n"
         $BanScriptString = "$($BanScriptString)`r`n"
         $ScriptLoopCount ++
-    } until ($ScriptLoopCount+1 -gt $ConcatAddressArrayList.Count)
+    } until (($ScriptLoopCount + 1) -gt $ConcatAddressArrayList.Count)
     Set-Content -Path "$($Store)\RDP_Ban.txt" -Value $BanScriptString
     Start-Process -WorkingDirectory "$($Store)" -NoNewWindow -FilePath "C:\Windows\System32\netsh.exe" -ArgumentList "-f", "$($Store)\RDP_Ban.txt" # -RedirectStandardOutput "$($Store)\stdout.log" -RedirectStandardError "$($Store)\stderr.log" -ErrorAction Stop
 }
 
-if ($StoreEvents) {
+if ($StoreEvents -eq $true) {
     if ($StoreBanList) {
         $BanListJson = ($BanList | ConvertTo-Json)
         Set-Content -Path "$($Store)\BanList.json" -Value $BanListJson
@@ -165,7 +167,7 @@ if ($StoreEvents) {
     }
 }
 else {
-    if ($RemoveEvents) {
+    if ($RemoveEvents -eq $true) {
         #Remove-Item -Path "$($WatchList)\$($IpAddressMD5).json"
     }
 }
