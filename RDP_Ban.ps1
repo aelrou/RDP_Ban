@@ -1,5 +1,6 @@
 # Set-ExecutionPolicy RemoteSigned
-# "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -File "C:\Users\Public\PowerShell\RDP_Ban.ps1"
+# Unblock-File -Path "C:\Users\Public\PowerShell\RDP_Ban\RDP_Ban.ps1"
+# "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -File "C:\Users\Public\PowerShell\RDP_Ban\RDP_Ban.ps1"
 $Store = "C:\Users\Public\PowerShell\RDP_Ban"
 $WatchList = "$($Store)\WatchList"
 
