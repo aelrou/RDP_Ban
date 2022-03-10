@@ -73,7 +73,7 @@ $EventsToRemove = $null
 $EventsToRemove = @{ }
 foreach ($Pair in $Events.GetEnumerator()) {
     $EventTime = [datetime]::ParseExact($Pair.Value.TimeCreated, $FormatTime, $null)
-    if ($EventTime -lt (Get-Date).AddMinutes(-10)) {
+    if ($EventTime -lt (Get-Date).AddMinutes(-60)) {
         $EventsToRemove.Add($Pair.Name, $null)
     }
 }
