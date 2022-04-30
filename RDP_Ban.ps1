@@ -175,7 +175,7 @@ if ($ConcatAddressArrayList.Count -gt 0) {
     $BanScriptString = ""
     $ScriptLoopCount = 0
     do {
-        if($ScriptLoopCount -lt 10) {
+        if ($ScriptLoopCount -lt 10) {
             $RuleNameTCP = "RDP_Ban 0$($ScriptLoopCount) - TCP $($Port)"
             $RuleNameUDP = "RDP_Ban 0$($ScriptLoopCount) - UDP $($Port)"    
         }
@@ -183,15 +183,13 @@ if ($ConcatAddressArrayList.Count -gt 0) {
             $RuleNameTCP = "RDP_Ban $($ScriptLoopCount) - TCP $($Port)"
             $RuleNameUDP = "RDP_Ban $($ScriptLoopCount) - UDP $($Port)"
         }
-        $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameTCP)""`r`n"
         if ($ConcatAddressArrayList[$ScriptLoopCount].Count -gt 0) {
+            $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameTCP)""`r`n"
             $BanScriptString = "$($BanScriptString)advfirewall firewall add rule name=""$($RuleNameTCP)"" dir=in action=block enable=yes profile=any protocol=tcp localport=$($Port) remoteip=$($ConcatAddressArrayList[$ScriptLoopCount])`r`n"
-        }
-        $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameUDP)""`r`n"
-        if ($ConcatAddressArrayList[$ScriptLoopCount].Count -gt 0) {
+            $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameUDP)""`r`n"
             $BanScriptString = "$($BanScriptString)advfirewall firewall add rule name=""$($RuleNameUDP)"" dir=in action=block enable=yes profile=any protocol=udp localport=$($Port) remoteip=$($ConcatAddressArrayList[$ScriptLoopCount])`r`n"
+            $BanScriptString = "$($BanScriptString)`r`n"
         }
-        $BanScriptString = "$($BanScriptString)`r`n"
         $ScriptLoopCount ++
     } until (($ScriptLoopCount + 1) -gt $ConcatAddressArrayList.Count)
     Set-Content -Path "$($Store)\RDP_Ban.txt" -Value $BanScriptString
