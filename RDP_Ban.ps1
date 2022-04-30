@@ -170,11 +170,6 @@ if ($SaveConcatAddressString -eq $true) {
     $ConcatAddressArrayList.Add($ConcatAddressString)
 }
 
-foreach ($String in $ConcatAddressArrayList) {
-    Write-Host($String)
-}
-
-
 $Port = "3389"
 $BanScriptString = ""
 $ScriptLoopCount = 0
