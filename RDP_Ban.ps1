@@ -6,9 +6,9 @@ $WatchList = "$($Store)\WatchList"
 
 $CurrentTime = Get-Date
 $WatchTime = $CurrentTime.AddMinutes(-60)
-$SecurityLogs = (Get-WinEvent -FilterHashtable @{LogName = "Security"; Id = 4625} -MaxEvents 99 | Where-Object { $_.TimeCreated -gt "$($WatchTime)" })
+$SecurityLogs = (Get-WinEvent -FilterHashtable @{ LogName = "Security"; Id = 4625 } -MaxEvents 99 | Where-Object { $_.TimeCreated -gt $WatchTime })
 
-$IpFailList = New-Object System.Collections.Generic.List[System.Object]
+$IpFailList = New-Object System.Collections.ArrayList
 foreach ($SecurityLog in $SecurityLogs) {
     $SecurityLogXML = $null
     $SecurityLogXML = [xml]$SecurityLog.ToXml()
@@ -41,159 +41,165 @@ foreach ($SecurityLog in $SecurityLogs) {
 
     if (!($IPv4 -eq $IPv6)) {
         if (`
-            $IpAddress -like "127.0.0.1"`
-            -or $IpAddress -like "169.254.0.254"`
-            -or $IpAddress -like "192.168.0.2"`
-            -or $IpAddress -like "172.16.0.2"`
-            -or $IpAddress -like "10.0.0.2"`
-            -or $IpAddress -like "fe80:ffff:ffff:ffff:ffff:ffff:ffff:ffff"`
+                $IpAddress -like "127.0.0.1"`
+                -or $IpAddress -like "169.254.0.254"`
+                -or $IpAddress -like "192.168.0.2"`
+                -or $IpAddress -like "172.16.0.2"`
+                -or $IpAddress -like "10.0.0.2"`
+                -or $IpAddress -like "fe80:ffff:ffff:ffff:ffff:ffff:ffff:ffff"`
         ) {
             # The IpAddress is white-listed so we will not ban list
-        } else {
+        }
+        else {
             $IpFailList.Add($IpAddress)
         }
     }
 }
 
+$UpdateBanList = $false
+
 $IpBruteList = $null
 $IpBruteList = @{}
-$IpFailCount = $IpFailList.Count
-for($i = 0; $i -lt $IpFailCount; $i++){ 
-    $IpSelect = $IpFailList.Item($i)
+foreach ($IpSelect in $IpFailList) {
     $IpSelectCount = 0
-    for($i2 = 0; $i2 -lt $IpFailCount; $i2++){ 
-        $IPSearch = $IpFailList.Item($i2)
-        if ($IpSelect -eq $IPSearch) {
+    foreach ($IpSearch in $IpFailList) {
+        if ($IpSelect -eq $IpSearch) {
             $IpSelectCount++
         }
-    }
+    }    
     if ($IpSelectCount -gt 9) {
         # IpSelect has too many failed logins too quickly so it is considered brute-force
         try {
-            $IpBruteList.Add($IpSelect,"")
+            $IpBruteList.Add($IpSelect, "")
+            $UpdateBanList = $true
         }
         catch [ArgumentException] {
         }
     }
 }
 
-$FormatTime = "yyyy-MM-ddTHH:mm:ss.ffff"
-foreach ($SecurityLog in $SecurityLogs) {
-    $SecurityLogXML = $null
-    $SecurityLogXML = [xml]$SecurityLog.ToXml()
-    $IpAddress = $null
-    $IpAddress = ($SecurityLogXML.Event.EventData.Data | Where-Object { $_.Name -eq "IpAddress" })."#text"
-    $NewEvent = $null
-    $NewEvent = @{}
-    foreach ($IpBrute in  $IpBruteList.Keys) {
-        if ($IpAddress -eq $IpBrute) {
-            $TimeCreated = (Get-Date -Date $SecurityLog.TimeCreated -Format $FormatTime)
-            $NewEvent.Add("MachineName", $SecurityLog.MachineName)
-            $NewEvent.Add("RecordId", $SecurityLog.RecordId)
-            $NewEvent.Add("TimeCreated", $TimeCreated)
-            $NewEvent.Add("IpAddress", $IpAddress)
-            $NewEvent.Add("WorkstationName", ($SecurityLogXML.Event.EventData.Data | Where-Object { $_.Name -eq "WorkstationName" })."#text")
-            $NewEvent.Add("TargetDomainName", ($SecurityLogXML.Event.EventData.Data | Where-Object { $_.Name -eq "TargetDomainName" })."#text")
-            $NewEvent.Add("TargetUserName", ($SecurityLogXML.Event.EventData.Data | Where-Object { $_.Name -eq "TargetUserName" })."#text")
-
-            $Events = $null
-            $Events = @{}
-            foreach ($Pair in $NewEvent) {
-                $Events.Add($TimeCreated, $Pair)
-            }
-
-            $Stream = [System.IO.MemoryStream]::new()
-            $Writer = [System.IO.StreamWriter]::new($Stream)
-            $Writer.Write($IpAddress)
-            $Writer.Flush()
-            $Stream.Position = 0
-            $IpAddressMD5 = (Get-FileHash -InputStream $Stream -Algorithm "MD5" | Select-Object Hash).Hash
-
-            if (!(Test-Path -Path "$($WatchList)\$($IpAddressMD5).json" -PathType Leaf)) {
-                if (!(Test-Path -Path "$($WatchList)" -PathType Container)) {
-                    New-Item -Path "$($WatchList)" -ItemType "directory"
+if ($UpdateBanList) {
+    $FormatTime = "yyyy-MM-ddTHH:mm:ss.ffff"
+    foreach ($SecurityLog in $SecurityLogs) {
+        $SecurityLogXML = $null
+        $SecurityLogXML = [xml]$SecurityLog.ToXml()
+        $IpAddress = $null
+        $IpAddress = ($SecurityLogXML.Event.EventData.Data | Where-Object { $_.Name -eq "IpAddress" })."#text"
+        $NewEvent = $null
+        $NewEvent = @{}
+        foreach ($IpBrute in  $IpBruteList.Keys) {
+            if ($IpAddress -eq $IpBrute) {
+                $TimeCreated = (Get-Date -Date $SecurityLog.TimeCreated -Format $FormatTime)
+                $NewEvent.Add("MachineName", $SecurityLog.MachineName)
+                $NewEvent.Add("RecordId", $SecurityLog.RecordId)
+                $NewEvent.Add("TimeCreated", $TimeCreated)
+                $NewEvent.Add("IpAddress", $IpAddress)
+                $NewEvent.Add("WorkstationName", ($SecurityLogXML.Event.EventData.Data | Where-Object { $_.Name -eq "WorkstationName" })."#text")
+                $NewEvent.Add("TargetDomainName", ($SecurityLogXML.Event.EventData.Data | Where-Object { $_.Name -eq "TargetDomainName" })."#text")
+                $NewEvent.Add("TargetUserName", ($SecurityLogXML.Event.EventData.Data | Where-Object { $_.Name -eq "TargetUserName" })."#text")
+    
+                $Events = $null
+                $Events = @{}
+                foreach ($Pair in $NewEvent) {
+                    $Events.Add($TimeCreated, $Pair)
                 }
+    
+                $Stream = [System.IO.MemoryStream]::new()
+                $Writer = [System.IO.StreamWriter]::new($Stream)
+                $Writer.Write($IpAddress)
+                $Writer.Flush()
+                $Stream.Position = 0
+                $IpAddressMD5 = (Get-FileHash -InputStream $Stream -Algorithm "MD5" | Select-Object Hash).Hash
+    
+                if (!(Test-Path -Path "$($WatchList)\$($IpAddressMD5).json" -PathType Leaf)) {
+                    if (!(Test-Path -Path "$($WatchList)" -PathType Container)) {
+                        New-Item -Path "$($WatchList)" -ItemType "directory"
+                    }
+                }
+                else {
+                    # $StoredEvents = (Get-Content -Path "$($WatchList)\$($IpAddressMD5).json" | ConvertFrom-Json)
+                    # $StoredEvents.PSObject.Properties | ForEach-Object { $Events[$_.Name] = $_.Value }
+                }
+                $EventsJson = ($Events | ConvertTo-Json)
+                Set-Content -Path "$($WatchList)\$($IpAddressMD5).json" -Value $EventsJson
             }
-            else {
-                $StoredEvents = (Get-Content -Path "$($WatchList)\$($IpAddressMD5).json" | ConvertFrom-Json)
-                $StoredEvents.PSObject.Properties | ForEach-Object { $Events[$_.Name] = $_.Value }
-            }
-            $EventsJson = ($Events | ConvertTo-Json)
-            Set-Content -Path "$($WatchList)\$($IpAddressMD5).json" -Value $EventsJson
         }
     }
-}
-
-$BanList = $null
-$BanList = @{}
-if (Test-Path -Path "$($Store)\BanList.json" -PathType Leaf) {
-    $StoredBanList = (Get-Content -Path "$($Store)\BanList.json" | ConvertFrom-Json)
-    $StoredBanList.PSObject.Properties | ForEach-Object { $BanList[$_.Name] = $_.Value }
-}
-foreach ($IpBrute in $IpBruteList.Keys) {
-    try {
-        $BanList.Add($IpBrute, (Get-Date -Format $FormatTime))
-    }
-    catch [ArgumentException] {
-    }
-}
-$BanListJson = ($BanList | ConvertTo-Json)
-Set-Content -Path "$($Store)\BanList.json" -Value $BanListJson
-
-
-
-$ConcatAddressArrayList = New-Object -TypeName "System.Collections.ArrayList"
-$ConcatAddressString = ""
-$SaveConcatAddressString = $true
-$FirstAddress = $true
-foreach ($Pair in $BanList.GetEnumerator()) {
-    # Limit the max length to 1800 so that there are 247 characters for commands, rule name, and padding
-    if ($ConcatAddressString.Length -lt 1800) {
-        if ($FirstAddress -eq $true) {
-            $ConcatAddressString = "$($Pair.Name)"
-            $SaveConcatAddressString = $true
-            $FirstAddress = $false
-        }
-        else {
-            $ConcatAddressString = -join("$($ConcatAddressString)", ",", "$($Pair.Name)")
+    
+    $BanList = $null
+    $BanList = @{}
+    if (!(Test-Path -Path "$($Store)\BanList.json" -PathType Leaf)) {
+        if (!(Test-Path -Path "$($Store)" -PathType Container)) {
+            New-Item -Path "$($Store)" -ItemType "directory"
         }
     }
     else {
-        $ConcatAddressString = -join("$($ConcatAddressString)", ",", "$($Pair.Name)")
-        $ConcatAddressArrayList.Add($ConcatAddressString)
-        $SaveConcatAddressString = $false
-        $ConcatAddressString = ""
-        $FirstAddress = $true
+        $StoredBanList = (Get-Content -Path "$($Store)\BanList.json" | ConvertFrom-Json)
+        $StoredBanList.PSObject.Properties | ForEach-Object { $BanList[$_.Name] = $_.Value }
     }
-}
-if ($SaveConcatAddressString -eq $true) {
-    $ConcatAddressArrayList.Add($ConcatAddressString)
-}
-
-if ($ConcatAddressArrayList.Count -gt 0) {
-    $Port = "3389"
-    $BanScriptString = ""
-    $ScriptLoopCount = 0
-    do {
-        if ($ScriptLoopCount -lt 10) {
-            $RuleNameTCP = "RDP_Ban 0$($ScriptLoopCount) - TCP $($Port)"
-            $RuleNameUDP = "RDP_Ban 0$($ScriptLoopCount) - UDP $($Port)"    
+    foreach ($IpBrute in $IpBruteList.Keys) {
+        try {
+            $BanList.Add($IpBrute, (Get-Date -Format $FormatTime))
+        }
+        catch [ArgumentException] {
+        }
+    }
+    $BanListJson = ($BanList | ConvertTo-Json)
+    Set-Content -Path "$($Store)\BanList.json" -Value $BanListJson
+    
+    $ConcatAddressArrayList = New-Object System.Collections.ArrayList
+    $ConcatAddressString = ""
+    $SaveConcatAddressString = $true
+    $FirstAddress = $true
+    foreach ($Pair in $BanList.GetEnumerator()) {
+        # Limit the max length to 1800 so that there are 247 characters for commands, rule name, and padding
+        if ($ConcatAddressString.Length -lt 1800) {
+            if ($FirstAddress -eq $true) {
+                $ConcatAddressString = "$($Pair.Name)"
+                $SaveConcatAddressString = $true
+                $FirstAddress = $false
+            }
+            else {
+                $ConcatAddressString = -join ("$($ConcatAddressString)", ",", "$($Pair.Name)")
+            }
         }
         else {
-            $RuleNameTCP = "RDP_Ban $($ScriptLoopCount) - TCP $($Port)"
-            $RuleNameUDP = "RDP_Ban $($ScriptLoopCount) - UDP $($Port)"
+            $ConcatAddressString = -join ("$($ConcatAddressString)", ",", "$($Pair.Name)")
+            $ConcatAddressArrayList.Add($ConcatAddressString)
+            $SaveConcatAddressString = $false
+            $ConcatAddressString = ""
+            $FirstAddress = $true
         }
-        if ($ConcatAddressArrayList[$ScriptLoopCount].Count -gt 0) {
-            $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameTCP)""`r`n"
-            $BanScriptString = "$($BanScriptString)advfirewall firewall add rule name=""$($RuleNameTCP)"" dir=in action=block enable=yes profile=any protocol=tcp localport=$($Port) remoteip=$($ConcatAddressArrayList[$ScriptLoopCount])`r`n"
-            $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameUDP)""`r`n"
-            $BanScriptString = "$($BanScriptString)advfirewall firewall add rule name=""$($RuleNameUDP)"" dir=in action=block enable=yes profile=any protocol=udp localport=$($Port) remoteip=$($ConcatAddressArrayList[$ScriptLoopCount])`r`n"
-            $BanScriptString = "$($BanScriptString)`r`n"
-        }
-        $ScriptLoopCount ++
-    } until (($ScriptLoopCount + 1) -gt $ConcatAddressArrayList.Count)
-    Set-Content -Path "$($Store)\RDP_Ban.txt" -Value $BanScriptString
-    Start-Process -WorkingDirectory "$($Store)" -NoNewWindow -FilePath "C:\Windows\System32\netsh.exe" -ArgumentList "-f", "$($Store)\RDP_Ban.txt" # -RedirectStandardOutput "$($Store)\stdout.log" -RedirectStandardError "$($Store)\stderr.log" -ErrorAction Stop
+    }
+    if ($SaveConcatAddressString -eq $true) {
+        $ConcatAddressArrayList.Add($ConcatAddressString)
+    }
+    
+    if (!($ConcatAddressArrayList[0] -eq "")) {
+        $Port = "3389"
+        $BanScriptString = ""
+        $ScriptLoopCount = 0
+        do {
+            if ($ScriptLoopCount -lt 10) {
+                $RuleNameTCP = "RDP_Ban 0$($ScriptLoopCount) - TCP $($Port)"
+                $RuleNameUDP = "RDP_Ban 0$($ScriptLoopCount) - UDP $($Port)"    
+            }
+            else {
+                $RuleNameTCP = "RDP_Ban $($ScriptLoopCount) - TCP $($Port)"
+                $RuleNameUDP = "RDP_Ban $($ScriptLoopCount) - UDP $($Port)"
+            }
+            if (!($ConcatAddressArrayList[$ScriptLoopCount] -eq "")) {
+                $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameTCP)""`r`n"
+                $BanScriptString = "$($BanScriptString)advfirewall firewall add rule name=""$($RuleNameTCP)"" dir=in action=block enable=yes profile=any protocol=tcp localport=$($Port) remoteip=$($ConcatAddressArrayList[$ScriptLoopCount])`r`n"
+                $BanScriptString = "$($BanScriptString)advfirewall firewall delete rule name=""$($RuleNameUDP)""`r`n"
+                $BanScriptString = "$($BanScriptString)advfirewall firewall add rule name=""$($RuleNameUDP)"" dir=in action=block enable=yes profile=any protocol=udp localport=$($Port) remoteip=$($ConcatAddressArrayList[$ScriptLoopCount])`r`n"
+                $BanScriptString = "$($BanScriptString)`r`n"
+            }
+            $ScriptLoopCount ++
+        } until (($ScriptLoopCount + 1) -gt $ConcatAddressArrayList.Count)
+        Set-Content -Path "$($Store)\RDP_Ban.txt" -Value $BanScriptString
+        Start-Process -WorkingDirectory "$($Store)" -NoNewWindow -FilePath "C:\Windows\System32\netsh.exe" -ArgumentList "-f", "$($Store)\RDP_Ban.txt" # -RedirectStandardOutput "$($Store)\stdout.log" -RedirectStandardError "$($Store)\stderr.log" -ErrorAction Stop
+    }    
 }
 
 Write-host "-----"
