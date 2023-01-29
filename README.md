@@ -3,7 +3,7 @@ PowerShell script that mitigates brute-force Remote Desktop (RDP) logins
 
 This script is designed to run as a triggered task with Administrative privileges in the Task Scheduler on Windows 10 Pro. When a RDP login failure occures it is recorded in the Event Viewer Security log with event ID 4625. The Task Scheduler [can be configured](https://github.com/aelrou/RDP_Ban/blob/master/Task%20Scheduler%20Trigger.png) to [take action](https://github.com/aelrou/RDP_Ban/blob/master/Task%20Scheduler%20Action.png) whenever an event with that ID is recorded.
 
-This script determins if a remote IP address has recorded 10 or more failed login attempts in the past 60 minutes. If it has, that IP address is added to a firewall block rule on port 3389 TCP/UDP.
+This script determins if a remote IP address has recorded 10 or more failed login attempts in the past 10 hours. If it has, that IP address is added to a firewall block rule on port 3389 TCP/UDP.
 
 Tested on Windows 10 Pro, Windows Server 2016, and Windows Server 2019.
 

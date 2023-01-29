@@ -5,8 +5,8 @@ $Store = "C:\Users\Public\PowerShell\RDP_Ban"
 $WatchList = "$($Store)\WatchList"
 
 $CurrentTime = Get-Date
-$WatchTime = $CurrentTime.AddMinutes(-60)
-$SecurityLogs = (Get-WinEvent -FilterHashtable @{ LogName = "Security"; Id = 4625 } -MaxEvents 99 | Where-Object { $_.TimeCreated -gt $WatchTime })
+$WatchTime = $CurrentTime.AddHours(-10)
+$SecurityLogs = (Get-WinEvent -FilterHashtable @{ LogName = "Security"; Id = 4625 } -MaxEvents 999 | Where-Object { $_.TimeCreated -gt $WatchTime })
 
 $IpFailList = New-Object System.Collections.ArrayList
 foreach ($SecurityLog in $SecurityLogs) {
