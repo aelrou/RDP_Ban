@@ -1,1 +1,2 @@
 advfirewall firewall delete rule name="RDP_Ban 00 - TCP 3389"
+advfirewall firewall add rule name="RDP_Ban 00 - TCP 3389" dir=in action=block enable=yes profile=any protocol=tcp localport=3389 remoteip=45.131.195.237
